@@ -13,7 +13,7 @@ import { CreateUserDto } from './dto/user.dto';
 @Injectable()
 export class UsersService {
   constructor(
-   @InjectRepository(User)
+    @InjectRepository(User)
     private readonly userRepository: Repository<User>,
 
     @InjectRepository(Company)
@@ -63,5 +63,17 @@ export class UsersService {
 
     const user = this.userRepository.create({ ...userData });
     return this.userRepository.save(user);
+  }
+
+  async findByEmail(email: string): Promise<User | null> {
+    try {
+      return this.userRepository.findOne({ where: { email } });
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException('Usuário não encontrado');
+      } else {
+        throw error;
+      }
+    }
   }
 }

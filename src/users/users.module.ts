@@ -12,5 +12,6 @@ import { Company } from 'src/companies/company.entity';
   ],
   providers: [UsersService],
   controllers: [UsersController],
+  exports: [UsersService],
 })
 export class UsersModule {}
