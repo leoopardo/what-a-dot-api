@@ -13,9 +13,9 @@ export class Plan {
   @Column()
   maxUsers: number;
 
-  @Column()
-  price: number; // Ex: 99.90
+  @Column('numeric', { precision: 10, scale: 2, nullable: true })
+  price: number;
 
-  @OneToMany(() => Company, company => company.plan)
+  @OneToMany(() => Company, (company) => company.plan)
   companies: Company[];
 }

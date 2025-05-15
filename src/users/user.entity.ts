@@ -24,7 +24,7 @@ export class User {
   name: string;
 
   @Column({ unique: true })
-  phoneNumber: string;
+  phoneNumber?: string;
 
   @Column({ default: false })
   isAdmin: boolean;
