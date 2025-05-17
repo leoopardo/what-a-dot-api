@@ -7,6 +7,7 @@ import { Request } from 'express';
 import { PaginatedResponse } from 'src/types/response.interface';
 import { User } from './user.entity';
 import { queryParams } from 'src/types/queryParams.interface';
+import { CheckCompanyPlanGuard } from 'src/common/guards/check-company-plan.guard';
 
 @Controller('users')
 export class UsersController {
@@ -16,7 +17,7 @@ export class UsersController {
   //   async createManager(@Body() createUserDto: CreateUserDto) {
   //     return this.usersService.createManager(createUserDto);
   //   }
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), CheckCompanyPlanGuard)
   @Post()
   async createUserForCompany(
     @Body() createUserDto: CreateUserDto,
@@ -32,7 +33,7 @@ export class UsersController {
     return this.usersService.findByPhoneNumber(phone);
   }
 
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), CheckCompanyPlanGuard)
   @Get("")
   async findAll(@Req() req: Request, @Query() query: queryParams<User>) {
     const companyId = (req as any).user.companyId;

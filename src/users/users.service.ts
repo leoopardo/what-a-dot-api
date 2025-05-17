@@ -1,5 +1,6 @@
 // src/users/users.service.ts
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -38,6 +39,36 @@ export class UsersService {
 
   async createUserForCompany(companyId: string, userData: CreateUserDto) {
     try {
+      const userExists = await this.userRepository.findOne({
+        where: { phoneNumber: userData.phoneNumber },
+        relations: ['company'],
+      });
+
+      const mandatoryFields = ['name', 'phoneNumber'];
+
+      const missingFields = mandatoryFields.filter(
+        (field) => !userData[field as keyof CreateUserDto]
+      );
+
+      if (missingFields.length > 0) {
+        throw new BadRequestException(
+          `Os seguintes campos são obrigatórios: ${missingFields.join(', ')}`
+        );
+      }
+
+      if (userExists) {
+        throw new BadRequestException(
+          `Esse telefone já está cadastrado na empresa: ${userExists.company.name}`
+        );
+      }
+
+      const isPhoneNumberValid = /^\(?\d{2}\)?\s?(9?\d{4})-?\d{4}$/.test(
+        userData?.phoneNumber as string
+      );
+      if (!isPhoneNumberValid) {
+        throw new BadRequestException('O número de telefone não é válido.');
+      }
+
       const company = await this.companyRepository.findOne({
         where: { id: companyId },
         relations: ['users', 'plan'],
@@ -58,9 +89,12 @@ export class UsersService {
         );
       }
 
-      if (company.users.length >= company.plan.maxUsers) {
+      if (
+        company.users.filter((user) => !user.isManager && !user.isAdmin)
+          .length >= company.plan.maxUsers
+      ) {
         throw new ForbiddenException(
-          'Limite de usuários atingido para este plano'
+          `Limite de funcionários atingido para o plano '${company.plan.name}', realize o upgrade do plano para continuar adicionando colaboradores.`
         );
       }
 
@@ -161,4 +195,8 @@ export class UsersService {
       }
     }
   }
+
+  // TODO - implementar a opção do usuário de sair da empresa ao enviar /Sair da empresa mo whatsapp
+  // aqui será um webhook do whatsapp que ao receber a mensagem /Sair da empresa chama esse método
+  async leaveCompanyByPhoneNumber(phoneNumber: string) {}
 }

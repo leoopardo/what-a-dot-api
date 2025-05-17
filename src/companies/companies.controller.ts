@@ -6,11 +6,14 @@ import {
   Get,
   Param,
   NotFoundException,
+  UseGuards,
+  Req,
 } from '@nestjs/common';
 import { CompaniesService } from './companies.service';
 import { PlansService } from '../plans/plans.service';
 import { Plan } from '../plans/plan.entity';
 import { CreateCompanyDto } from './dto/company.dto';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('companies')
 export class CompaniesController {
@@ -33,6 +36,22 @@ export class CompaniesController {
       password,
       name: managerName,
     });
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post('payment')
+  async createPayment(
+    @Body() body: { paymentStatus: number },
+    @Req() req: any
+  ) {
+    const companyId = req.user.companyId;
+    return this.companiesService.registerPayment(body, companyId);
+  }
+
+  @UseGuards()
+  @Post('confirm-payment')
+  async confirmPaymentWebhook(@Body() body: any) {
+    // TODO - implementar alguma plataforma de pagamento e webhhok
   }
 
   @Get()

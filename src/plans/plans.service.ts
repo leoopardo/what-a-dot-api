@@ -26,8 +26,9 @@ export class PlansService {
 
   async seedDefaultPlans(): Promise<void> {
     const defaults = [
-      { name: 'Starter', maxUsers: 5, price: 0 },
-      { name: 'Pro', maxUsers: 20, price: 99.9 },
+      { name: 'Trial', maxUsers: 30, price: 0 },
+      { name: 'Starter', maxUsers: 10, price: 29.9 },
+      { name: 'Pro', maxUsers: 30, price: 99.9 },
       { name: 'Enterprise', maxUsers: 100, price: 299.9 },
     ];
 

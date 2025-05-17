@@ -23,6 +23,21 @@ export class Company {
   @Column({ type: 'timestamp', nullable: true })
   trialEndsAt: Date;
 
+  @Column({ type: 'timestamp', nullable: true })
+  nextPaymentDue: Date;
+
   @Column({ type: 'boolean', default: false })
   isPaymentActive: boolean;
+
+  @Column({nullable: true})
+  creditCardNumber: string;
+
+  @Column({nullable: true})
+  cardExpiresAt: string
+
+  @Column({nullable: true})
+  cvv: string
+
+  @Column({nullable: true})
+  creditCardOwnerName: string
 }
