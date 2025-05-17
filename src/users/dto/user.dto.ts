@@ -27,4 +27,8 @@ export class CreateUserDto {
   @IsBoolean()
   @IsOptional()
   isManager?: boolean;
+
+  @IsString()
+  @IsOptional()
+  phoneNumber?: string;
 }

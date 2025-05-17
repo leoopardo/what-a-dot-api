@@ -9,6 +9,8 @@ import { Repository } from 'typeorm';
 import { User } from './user.entity';
 import { Company } from 'src/companies/company.entity';
 import { CreateUserDto } from './dto/user.dto';
+import { PaginatedResponse } from 'src/types/response.interface';
+import { queryParams } from 'src/types/queryParams.interface';
 
 @Injectable()
 export class UsersService {
@@ -35,39 +37,122 @@ export class UsersService {
   }
 
   async createUserForCompany(companyId: string, userData: CreateUserDto) {
-    const company = await this.companyRepository.findOne({
-      where: { id: companyId },
-      relations: ['users', 'plan'],
-    });
+    try {
+      const company = await this.companyRepository.findOne({
+        where: { id: companyId },
+        relations: ['users', 'plan'],
+      });
 
-    if (!company) throw new NotFoundException('Empresa não encontrada');
+      if (!company) throw new NotFoundException('Empresa não encontrada');
 
-    const now = new Date();
+      const now = new Date();
 
-    const isTrialExpired =
-      company.isTrial && company.trialEndsAt && company.trialEndsAt < now;
-    const canAddUser =
-      company.isPaymentActive || (company.isTrial && !isTrialExpired);
+      const isTrialExpired =
+        company.isTrial && company.trialEndsAt && company.trialEndsAt < now;
+      const canAddUser =
+        company.isPaymentActive || (company.isTrial && !isTrialExpired);
 
-    if (!canAddUser) {
-      throw new ForbiddenException(
-        'Plano inativo ou período de teste expirado'
-      );
+      if (!canAddUser) {
+        throw new ForbiddenException(
+          'Plano inativo ou período de teste expirado'
+        );
+      }
+
+      if (company.users.length >= company.plan.maxUsers) {
+        throw new ForbiddenException(
+          'Limite de usuários atingido para este plano'
+        );
+      }
+
+      const user = this.userRepository.create({ ...userData, company });
+
+      // TODO - implementar mensagem de boas vindas no whatsapp do usuário cadastrado
+
+      return this.userRepository.save(user);
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException('Usuário não encontrado');
+      } else if (error instanceof ForbiddenException) {
+        throw new ForbiddenException(error.message);
+      } else {
+        throw error;
+      }
     }
-
-    if (company.users.length >= company.plan.maxUsers) {
-      throw new ForbiddenException(
-        'Limite de usuários atingido para este plano'
-      );
-    }
-
-    const user = this.userRepository.create({ ...userData });
-    return this.userRepository.save(user);
   }
 
   async findByEmail(email: string): Promise<User | null> {
     try {
       return this.userRepository.findOne({ where: { email } });
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException('Usuário não encontrado');
+      } else {
+        throw error;
+      }
+    }
+  }
+
+  async findById(id: string): Promise<User | null> {
+    try {
+      return this.userRepository.findOne({
+        where: { id },
+        relations: ['company'],
+      });
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException('Usuário não encontrado');
+      } else {
+        throw error;
+      }
+    }
+  }
+
+  async findAll(
+    companyId: string,
+    query: queryParams<User>
+  ): Promise<PaginatedResponse<User>> {
+    try {
+      const qb = this.userRepository
+        .createQueryBuilder('user')
+        .leftJoin('user.company', 'company')
+        .where('company.id = :companyId', { companyId });
+
+      if (query.search) {
+        qb.andWhere(
+          '(user.name LIKE :search OR user.phoneNumber LIKE :search)',
+          {
+            search: `%${query.search}%`,
+          }
+        );
+      }
+
+      const page = +query.page || 1;
+      const limit = +query.limit || 10;
+      const offset = (page - 1) * limit;
+
+      const orderBy = query.orderBy
+        ? `user.${query.orderBy}`
+        : 'user.createdAt';
+      const order = query.order || 'DESC';
+      qb.orderBy(orderBy, order.toUpperCase() as 'ASC' | 'DESC');
+
+      // Paginação
+      qb.skip(offset).take(limit);
+
+      const [users, total] = await qb.getManyAndCount();
+
+      const sanatizedUsers = users.map((user) => {
+        const { password, ...sanitizedUser } = user;
+        return sanitizedUser;
+      });
+
+      return {
+        data: sanatizedUsers,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      };
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw new NotFoundException('Usuário não encontrado');

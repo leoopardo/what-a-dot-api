@@ -41,6 +41,6 @@ export class User {
   @OneToMany(() => Record, (record) => record.user)
   records: Record[];
 
-  @ManyToOne(() => Company, (company) => company.users)
+  @ManyToOne(() => Company, (company) => company.users, { nullable: false })
   company: Company;
 }
