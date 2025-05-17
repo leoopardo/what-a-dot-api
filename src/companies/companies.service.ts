@@ -78,6 +78,11 @@ export class CompaniesService {
       );
     }
 
+    // TODO - próximos passos:
+    // criar uma conta whatsapp business;
+    // integrar o whatsapp api
+    // começar a enviar mensagens e implementar webhooks por mensagem
+
     await this.companyRepository.update(companyId, {
       nextPaymentDue: dayjs().add(31, 'days').toDate(),
     });
