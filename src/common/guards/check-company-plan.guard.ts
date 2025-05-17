@@ -29,7 +29,8 @@ export class CheckCompanyPlanGuard implements CanActivate {
     }
 
     const now = new Date();
-    const trialExpired = company.isTrial && company.trialEndsAt < now;
+    const trialExpired =
+      company.isTrial && company?.trialEndsAt && company?.trialEndsAt < now;
     const paymentOverdue =
       !company.isTrial &&
       company.nextPaymentDue &&
@@ -44,7 +45,7 @@ export class CheckCompanyPlanGuard implements CanActivate {
 
     if (paymentOverdue) {
       throw new HttpException(
-        `Sua empresa possui pagamentos pendentes. Após a confirmação do pagamento, você poderá realizar essa ação normalmente.`,
+        `Sua empesa possui pagamentos pendentes. Após a confirmação do pagamento, você poderá realizar essa ação normalmente.`,
         402
       );
     }

@@ -1,0 +1,5 @@
+- criar uma conta whatsapp business;
+- integrar o whatsapp api;
+- começar a enviar mensagens e implementar webhooks por mensagem;
+- implementar pagamento por cartão de crédito recorrente;
+- o pagamento deve chamar o service registerPayment e alterar o nextPaymentDue da company

@@ -12,7 +12,7 @@ export class RecordsService {
     private readonly recordRepository: Repository<Record>,
   ) {}
 
-  async createRecord(user: User, type: 'entrada' | 'saida'): Promise<Record> {
+  async createRecord(user: User, type: 'in' | 'out'): Promise<Record> {
     const record = this.recordRepository.create({ user, type });
     return this.recordRepository.save(record);
   }

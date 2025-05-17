@@ -8,11 +8,12 @@ import {
   NotFoundException,
   UseGuards,
   Req,
+  Patch,
 } from '@nestjs/common';
 import { CompaniesService } from './companies.service';
 import { PlansService } from '../plans/plans.service';
 import { Plan } from '../plans/plan.entity';
-import { CreateCompanyDto } from './dto/company.dto';
+import { CreateCompanyDto, UpdateCompanyDto } from './dto/company.dto';
 import { AuthGuard } from '@nestjs/passport';
 
 @Controller('companies')
@@ -46,6 +47,19 @@ export class CompaniesController {
   ) {
     const companyId = req.user.companyId;
     return this.companiesService.registerPayment(body, companyId);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Patch()
+  async updateCompany(@Body() body: UpdateCompanyDto, @Req() req: any) {
+    const companyId = req.user.companyId;
+    return this.companiesService.updateCompany(body, companyId);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('my')
+  async findMyCompany(@Req() req: any) {
+    return this.companiesService.findById(req.user.companyId);
   }
 
   @UseGuards()

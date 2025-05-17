@@ -7,6 +7,7 @@ import { Plan } from 'src/plans/plan.entity';
 import * as dayjs from 'dayjs';
 import * as bcrypt from 'bcrypt';
 import { User } from 'src/users/user.entity';
+import { UpdateCompanyDto } from './dto/company.dto';
 
 @Injectable()
 export class CompaniesService {
@@ -50,15 +51,70 @@ export class CompaniesService {
     });
   }
 
+  async updateCompany(body: UpdateCompanyDto, companyId: string) {
+    const creditCardMandatoryFields = [
+      'creditCardNumber',
+      'cardExpiresAt',
+      'cvv',
+      'creditCardOwnerName',
+    ];
+
+    const isTryingToUpdateCreditCard = creditCardMandatoryFields.some(
+      (field) => body[field as keyof UpdateCompanyDto] !== undefined
+    );
+
+    if (isTryingToUpdateCreditCard) {
+      const missingFields = creditCardMandatoryFields.filter(
+        (field) => !body[field as keyof UpdateCompanyDto]
+      );
+
+      if (missingFields.length > 0) {
+        throw new BadRequestException(
+          `Os seguintes campos de cartão são obrigatórios: ${missingFields.join(', ')}`
+        );
+      }
+    }
+
+    const latLongMandatoryFields = ['lat', 'long'];
+
+    const isTryingToUpdateLatLong = latLongMandatoryFields.some(
+      (field) => body[field as keyof UpdateCompanyDto] !== undefined
+    );
+
+    if (isTryingToUpdateLatLong || body.recordsOnlyInCompanyLocale === true) {
+      const missingFields = latLongMandatoryFields.filter(
+        (field) => !body[field as keyof UpdateCompanyDto]
+      );
+
+      if (missingFields.length > 0) {
+        throw new BadRequestException(
+          `Os seguintes campos de cartão são obrigatórios: ${missingFields.join(', ')}`
+        );
+      }
+    }
+
+    return this.companyRepository.update(companyId, body);
+  }
+
   async findAll(): Promise<Company[]> {
     return this.companyRepository.find({ relations: ['users'] });
   }
 
-  async findById(id: string): Promise<Company | null> {
-    return this.companyRepository.findOne({
+  async findById(id: string) {
+    const company = await this.companyRepository.findOne({
       where: { id },
       relations: ['users'],
     });
+
+    const sinatizedUsers = company?.users.map((user) => {
+      const { password, ...sanitizedUser } = user;
+      return sanitizedUser;
+    });
+
+    return {
+      ...company,
+      users: sinatizedUsers || [],
+    };
   }
 
   async registerPayment(body: { paymentStatus: number }, companyId: string) {
@@ -77,11 +133,6 @@ export class CompaniesService {
         `Seu plano ainda está vigente, a data de vencimento é ${dayjs(company?.nextPaymentDue).toISOString()}!`
       );
     }
-
-    // TODO - próximos passos:
-    // criar uma conta whatsapp business;
-    // integrar o whatsapp api
-    // começar a enviar mensagens e implementar webhooks por mensagem
 
     await this.companyRepository.update(companyId, {
       nextPaymentDue: dayjs().add(31, 'days').toDate(),

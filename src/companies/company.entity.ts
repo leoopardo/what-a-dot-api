@@ -1,5 +1,11 @@
 // src/companies/company.entity.ts
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToMany,
+  ManyToOne,
+} from 'typeorm';
 import { User } from '../users/user.entity';
 import { Plan } from '../plans/plan.entity';
 
@@ -11,10 +17,10 @@ export class Company {
   @Column()
   name: string;
 
-  @OneToMany(() => User, user => user.company)
+  @OneToMany(() => User, (user) => user.company)
   users: User[];
 
-  @ManyToOne(() => Plan, plan => plan.companies)
+  @ManyToOne(() => Plan, (plan) => plan.companies)
   plan: Plan;
 
   @Column({ type: 'boolean', default: true })
@@ -29,15 +35,25 @@ export class Company {
   @Column({ type: 'boolean', default: false })
   isPaymentActive: boolean;
 
-  @Column({nullable: true})
+  @Column({ nullable: true })
   creditCardNumber: string;
 
-  @Column({nullable: true})
-  cardExpiresAt: string
+  @Column({ nullable: true })
+  cardExpiresAt: string;
 
-  @Column({nullable: true})
-  cvv: string
+  @Column({ nullable: true })
+  cvv: string;
 
-  @Column({nullable: true})
-  creditCardOwnerName: string
+  @Column({ nullable: true })
+  creditCardOwnerName: string;
+
+  // TODO - verificar se o whatsapp tem a info de geolocalização
+  @Column({ default: false })
+  recordsOnlyInCompanyLocale: boolean;
+  
+  @Column('double precision', { nullable: true })
+  lat: number;
+
+  @Column('double precision', { nullable: true })
+  long: number;
 }

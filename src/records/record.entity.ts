@@ -8,7 +8,7 @@ export class Record {
   id: string;
 
   @Column()
-  type: 'entrada' | 'saida';
+  type: 'in' | 'out';
 
   @CreateDateColumn()
   timestamp: Date;
